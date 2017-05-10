@@ -1,0 +1,4 @@
+[package]
+name = "megatherium"
+version = "0.1.0"
+authors = ["bdoner <bdoner@user.noreply.github.com>"]
