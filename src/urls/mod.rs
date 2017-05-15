@@ -1,5 +1,5 @@
-pub use self::messages::get_name;
-pub use self::db::get_cursor;
+pub use self::messages::*;
+pub use self::db::*;
 
 mod messages;
 mod db;

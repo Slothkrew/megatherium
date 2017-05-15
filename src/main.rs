@@ -1,6 +1,7 @@
 mod urls;
+mod wheel;
 
 fn main() {
-    let own_name = urls::get_name();
-    println!("Hello from {}!", own_name);
+    let punishment = wheel::spin();
+    println!("{}!", punishment);
 }
