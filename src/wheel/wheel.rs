@@ -10,7 +10,21 @@ pub fn spin() -> String {
         format!("forced to program in ArnoldC for a living"),
         format!("dot|not hits you with a wrench"),
         format!("gulag {} years", rng.gen_range(0, 1_000_000))
-    };    
+    };
     let i = rng.gen_range(0, punishments.len());
     punishments[i].to_string()
+}
+
+pub fn about() -> String {
+    "glorious wheel best wheel".to_string()
+}
+
+pub fn help() -> String {
+        "\
+        ***********************************************\n\
+        | wheel: best wheel utility                   |\n\
+        |---------------------------------------------|\n\
+        | !wheel       | fair sentence just sentence  |\n\
+        | !wheel about | learn wheel understand wheel |\n\
+        ***********************************************".to_string()
 }
