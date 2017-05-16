@@ -2,11 +2,11 @@ mod urls;
 mod wheel;
 
 fn main() {
-    let command = "wheel".to_string();
-    exec_command(command);
+    let command = "url add https://hurtig.ninja super cool file sharing!".to_string();
+    exec_command(command, format!("sjums"));
 }
 
-fn exec_command(command: String) {
+fn exec_command(command: String, user: String) {
     let mut input = command.split_whitespace();
     let command = input.nth(0);
     let mut args = input;
@@ -15,20 +15,56 @@ fn exec_command(command: String) {
         Some("wheel") => {
             let arg = args.nth(0);
             if &arg == &Some("about") {
-                wheel::about()
+                Some(wheel::about())
             }
             else if &arg == &Some("help") {
-                wheel::help()
+                Some(wheel::help())
             }
             else {
-                wheel::spin()
+                Some(wheel::spin())
             }
         },
         Some("url") => {
             //Todo: add, clear?, latest/newest, list, find, count, stats
-            "".to_string()
+            let arg = args.nth(0);
+            match arg {
+                Some("add") => {
+                    let url = args.nth(0);
+                    let desc = the_rest(args);
+                    match url {
+                        Some(url) => urls::add(&url, &desc, &user),
+                        None => (),
+                    }
+                    None
+                },
+                Some("help") => {
+                    Some(urls::help())
+                },
+                _ => {
+                    None
+                }
+            }
         },
-        _ => "".to_string()
+        _ => {
+            None
+        }
     };
-    println!("{}", ret);
+    match ret {
+        Some(msg) => {
+            println!("{}", msg);
+        },
+        _ => {
+            println!("No message returned.");
+        }
+    }
+}
+
+fn the_rest(args: std::str::SplitWhitespace)  -> String {
+    let mut out = String::new();
+    for word in args {
+        out.push_str(word);
+        out.push(' ');
+    }
+    out.pop();
+    out
 }
