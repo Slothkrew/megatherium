@@ -2,7 +2,7 @@ mod urls;
 mod wheel;
 
 fn main() {
-    let command = "url help".to_string();
+    let command = "url find something".to_string();
     exec_command(command, format!("sjums"));
 }
 
@@ -11,17 +11,17 @@ fn exec_command(command: String, user: String) {
     let command = input.nth(0);
     let mut args = input;
 
-    let ret = match command {
+    match command {
         Some("wheel") => {
             let arg = args.nth(0);
             if &arg == &Some("about") {
-                Some(wheel::about())
+                respond(wheel::about());
             }
             else if &arg == &Some("help") {
-                Some(wheel::help())
+                respond(wheel::help());
             }
             else {
-                Some(wheel::spin())
+                respond(wheel::spin());
             }
         },
         Some("url") => {
@@ -35,31 +35,33 @@ fn exec_command(command: String, user: String) {
                         Some(url) => urls::add(&String::from(url), &desc, &user),
                         None => (),
                     }
-                    None
                 },
                 Some("help") => {
-                    Some(urls::help())
+                    respond(urls::help());
                 },
-                _ => {
-                    None
-                }
+                Some("latest") | Some("newest") => {
+                    let last_url = urls::get_last();
+                    respond(last_url.to_string());
+                },
+                Some("find") => {
+                    let query = the_rest(args);
+                    let matches = urls::find(query);
+                    for m in matches {
+                        respond(m.to_string());
+                    }
+                },
+                _ => ()
             }
         },
-        _ => {
-            None
-        }
-    };
-    match ret {
-        Some(msg) => {
-            println!("{}", msg);
-        },
-        _ => {
-            println!("No message returned.");
-        }
+        _ => ()
     }
 }
 
-fn the_rest(args: std::str::SplitWhitespace)  -> String {
+fn respond(msg: String) {
+    println!("{}", msg);
+}
+
+fn the_rest(args: std::str::SplitWhitespace) -> String {
     let mut out = String::new();
     for word in args {
         out.push_str(word);

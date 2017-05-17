@@ -5,6 +5,24 @@ extern crate time;
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
 1491376530|https://odin.handmade.network/|sjums|Odin programming language. New, hip, must try!
 */
+pub struct Url {
+    pub timestamp: i64,
+    pub url: String,
+    pub author: String,
+    pub summary: String
+}
+
+impl Url {
+    fn new(timestamp: i64, url: String, author: String, summary: String) -> Url {
+        Url{ timestamp: timestamp, url: url, author: author, summary: summary }
+    }
+
+    pub fn to_string(&self) -> String {
+        /// TODO: Convert epoch to datetime.. Maybe the time-crate can do some magic?
+        format!("{} -- \"{}\" -- {} ({})", self.url, self.summary, self.author, self.timestamp)
+    }
+}
+
 fn connection() -> rusqlite::Connection {
     let db_path = "urls.db";
     let con = rusqlite::Connection::open(db_path);
@@ -52,6 +70,16 @@ pub fn add(url: &String, summary: &String, author: &String) {
             println!("{:?}", e);
         }
     }
-
-
 }
+
+pub fn get_last() -> Url {
+    Url::new(-1, "https://example.com".to_string(), "yoyo".to_string(), "cool site. Very example".to_string())
+}
+
+pub fn find(query: String) -> Vec<Url> {
+    vec! {
+        Url::new(-1, "https://example.com".to_string(), "yoyo".to_string(), format!("cool {}. Very example", query)),
+        Url::new(-2, "https://website.com".to_string(), "manman".to_string(), format!("website about {}.", query))
+    }
+}
+
