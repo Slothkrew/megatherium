@@ -2,7 +2,7 @@ mod urls;
 mod wheel;
 
 fn main() {
-    let command = "url add https://hurtig.ninja super cool file sharing!".to_string();
+    let command = "url help".to_string();
     exec_command(command, format!("sjums"));
 }
 
