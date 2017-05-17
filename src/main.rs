@@ -32,7 +32,7 @@ fn exec_command(command: String, user: String) {
                     let url = args.nth(0);
                     let desc = the_rest(args);
                     match url {
-                        Some(url) => urls::add(&url, &desc, &user),
+                        Some(url) => urls::add(&String::from(url), &desc, &user),
                         None => (),
                     }
                     None

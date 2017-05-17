@@ -1,18 +1,19 @@
-extern crate sqlite;
+extern crate rusqlite;
 extern crate time;
 
 /*
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
 1491376530|https://odin.handmade.network/|sjums|Odin programming language. New, hip, must try!
 */
-fn connection() -> sqlite::Connection {
-    let con = sqlite::open("urls.db");
+fn connection() -> rusqlite::Connection {
+    let db_path = "urls.db";
+    let con = rusqlite::Connection::open(db_path);
     let connection = match con {
         Ok(con) => {
-            println!("Ok(con)");
             con
         },
         Err(e) => {
+            println!("Err(e): Could not open urls.db");
             panic!(e);
         }
     };
@@ -20,7 +21,7 @@ fn connection() -> sqlite::Connection {
 }
 
 fn epoch() -> i64 {
-    time::get_time().sec * 1000
+    time::get_time().sec
 }
 
 pub fn help() -> String {
@@ -39,15 +40,18 @@ pub fn help() -> String {
         **************************************************".to_string()
 }
 
-pub fn add(url: &str, desc: &str, author: &str) {
-    //TODO: Add url to sqlite DB
+pub fn add(url: &String, summary: &String, author: &String) {
     let connection = connection();
-    let mut statement = connection.prepare("INSERT INTO urls VALUES(?, ?, ?, ?);").unwrap();
-    statement.bind(1, epoch());
-    statement.bind(2, url);
-    statement.bind(3, author);
-    statement.bind(4, desc);
-    
-    //connection.execute(statement);   
+    let res = connection.execute("INSERT INTO urls (timestamp, url, author, summary) VALUES(?, ?, ?, ?);", &[&epoch(), url, author, summary]);
+    match res {
+        Ok(row_c) => {
+            println!("URL added! {} row(s) changed.", row_c);
+        },
+        Err(e) => {
+            println!("Couldn't add URL to SQLite DB.");
+            println!("{:?}", e);
+        }
+    }
+
 
 }
