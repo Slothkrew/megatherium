@@ -1,5 +1,7 @@
 extern crate rusqlite;
 extern crate time;
+extern crate chrono;
+
 
 /*
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
@@ -17,8 +19,16 @@ impl Url {
         Url{ timestamp: timestamp, url: url, author: author, summary: summary }
     }
 
+    fn epoch_to_tm(epoch: i64) -> time::Tm {
+        time::Tm{ };
+    }
+
     pub fn to_string(&self) -> String {
         /// TODO: Convert epoch to datetime.. Maybe the time-crate can do some magic?
+        // (Tue Aug 18 13:32:49 2015)
+        let time_format = "".to_string();
+        let time = self::time::strftime(&time_format, &self.epoch_to_tm(self.timestamp));
+
         format!("{} -- \"{}\" -- {} ({})", self.url, self.summary, self.author, self.timestamp)
     }
 }
