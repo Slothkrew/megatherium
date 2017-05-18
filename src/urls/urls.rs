@@ -107,22 +107,27 @@ pub fn find(query: String) -> Option<Vec<Url>> {
     sql_query.insert(0, '%');
     sql_query.push('%');
 
-    println!("find {}", sql_query);
 
     let connection = connection();
     let p_statement = connection.prepare("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;");
 
     match p_statement {
         Ok(mut statement) => {
-            println!("stmnt OK");
             match statement.query(&[&sql_query, &sql_query, &sql_query]) {
                 Ok(mut rows) => {
-                    println!("query OK");
                     while let Some(res_row) = rows.next() {
                         match res_row {
                             Ok(row) => {
-                                println!("row OK");
-                                results.push(Url::new(row.get(0), row.get(1), row.get(2), row.get(3)));
+                                let c0: i64 = row.get(0);
+                                println!("row OK {:?}", c0);
+                                results.push(
+                                    Url::new(
+                                        row.get(0),
+                                        row.get(1),
+                                        row.get(2),
+                                        row.get::<i32, String>(3)
+                                    )
+                                );
                             },
                             Err(_) => println!("row ERR")
                         }

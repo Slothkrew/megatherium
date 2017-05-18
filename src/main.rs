@@ -2,7 +2,7 @@ mod urls;
 mod wheel;
 
 fn main() {
-    let command = "url find http".to_string();
+    let command = "url find how-plex-is-doing-https-for-all-its-users".to_string();
     exec_command(command, format!("sjums"));
 }
 
