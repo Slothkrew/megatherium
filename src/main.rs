@@ -2,7 +2,7 @@ mod urls;
 mod wheel;
 
 fn main() {
-    let command = "url find something".to_string();
+    let command = "url newest".to_string();
     exec_command(command, format!("sjums"));
 }
 
@@ -41,7 +41,10 @@ fn exec_command(command: String, user: String) {
                 },
                 Some("latest") | Some("newest") => {
                     let last_url = urls::get_last();
-                    respond(last_url.to_string());
+                    match last_url {
+                        Some(url) => respond(url.to_string()),
+                        None => (),
+                    };
                 },
                 Some("find") => {
                     let query = the_rest(args);
