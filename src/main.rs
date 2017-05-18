@@ -1,18 +1,25 @@
-//extern crate discord;
+extern crate serenity;
 extern crate json;
 
 mod urls;
 mod wheel;
 
 use std::io::Read;
+use serenity::client::Client;
+
 
 fn main() {
     let token = get_token();
-    println!("Token is {}", token);
-    // let mut connection = discord::Discord::from_bot_token ("".to_string());
-    // while let Some(event) = connection.recv_event() {
+    //println!("Token is {}", token);
+    let mut client = Client::login(&token);
+    client.on_ready(|_context, ready|{
+        println!("Ready: {}#{}", ready.user.name, ready.user.discriminator);
+    });
+    client.on_message(|_context, message| {
+        println!("{}", message.content);
+    });
 
-    // }
+    let _ = client.start();
 
     let command = "unkown command".to_string();
     exec_command(command, "sjums".to_string());
