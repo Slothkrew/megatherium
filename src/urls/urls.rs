@@ -100,10 +100,45 @@ pub fn get_last() -> Option<Url> {
     url
 }
 
-pub fn find(query: String) -> Vec<Url> {
-    vec! {
-        Url::new(epoch(), "https://example.com".to_string(), "yoyo".to_string(), format!("cool {}. Very example", query)),
-        Url::new(epoch() - 36000, "https://website.com".to_string(), "manman".to_string(), format!("website about {}.", query))
+pub fn find(query: String) -> Option<Vec<Url>> {
+    let mut results = Vec::<Url>::new();
+
+    let mut sql_query = query.replace(" ", "%");
+    sql_query.insert(0, '%');
+    sql_query.push('%');
+
+    println!("find {}", sql_query);
+
+    let connection = connection();
+    let p_statement = connection.prepare("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;");
+
+    match p_statement {
+        Ok(mut statement) => {
+            println!("stmnt OK");
+            match statement.query(&[&sql_query, &sql_query, &sql_query]) {
+                Ok(mut rows) => {
+                    println!("query OK");
+                    while let Some(res_row) = rows.next() {
+                        match res_row {
+                            Ok(row) => {
+                                println!("row OK");
+                                results.push(Url::new(row.get(0), row.get(1), row.get(2), row.get(3)));
+                            },
+                            Err(_) => println!("row ERR")
+                        }
+                    }
+                },
+                Err(_) => ()
+            }
+        },
+        Err(_) => ()
+    };
+    if &results.len() > &0 {
+        Some(results)
     }
+    else {
+        None
+    }
+
 }
 
