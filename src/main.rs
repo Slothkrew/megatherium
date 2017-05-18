@@ -1,9 +1,21 @@
+//extern crate discord;
+extern crate json;
+
 mod urls;
 mod wheel;
 
+use std::io::Read;
+
 fn main() {
-    let command = "url find how-plex-is-doing-https-for-all-its-users".to_string();
-    exec_command(command, format!("sjums"));
+    let token = get_token();
+    println!("Token is {}", token);
+    // let mut connection = discord::Discord::from_bot_token ("".to_string());
+    // while let Some(event) = connection.recv_event() {
+
+    // }
+
+    let command = "unkown command".to_string();
+    exec_command(command, "sjums".to_string());
 }
 
 fn exec_command(command: String, user: String) {
@@ -77,4 +89,13 @@ fn the_rest(args: std::str::SplitWhitespace) -> String {
     }
     out.pop();
     out
+}
+
+fn get_token() -> String {
+    let mut file = std::fs::File::open("config.json").expect("Could not file config.json file!");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Could not read file content!");
+
+    let data = json::parse(&contents).expect("Could not parse config.json");
+    return String::from(data["bot_token"].as_str().expect("Could not read bot_token as string!"));
 }

@@ -3,6 +3,7 @@ name = "megatherium"
 version = "0.1.0"
 dependencies = [
  "chrono 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "json 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusqlite 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -20,6 +21,11 @@ dependencies = [
  "num 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "json"
+version = "0.11.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "kernel32-sys"
@@ -141,6 +147,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [metadata]
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
 "checksum chrono 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d9123be86fd2a8f627836c235ecdf331fdd067ecf7ac05aa1a68fbcf2429f056"
+"checksum json 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)" = "27600e8bb3b71bcc6213fb36b66b8dce60adc17a624257687ef5d1d4facafba7"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum libc 0.2.22 (registry+https://github.com/rust-lang/crates.io-index)" = "babb8281da88cba992fa1f4ddec7d63ed96280a1a53ec9b919fd37b53d71e502"
 "checksum libsqlite3-sys 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "33e0b09db40cce5117daf908cd067e84ea7d8b14ae3a826a29e19cd11305677b"
