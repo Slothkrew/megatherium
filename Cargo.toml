@@ -7,5 +7,4 @@ authors = ["bdoner <bdoner@user.noreply.github.com>"]
 rand = "0.3"
 rusqlite = "0.11.0"
 chrono = "0.3.1"
-#discord = "0.8.0"
 json = "0.11.6"
