@@ -20,11 +20,12 @@ pub fn about() -> String {
 }
 
 pub fn help() -> String {
-        "\
+        "```\
         ***********************************************\n\
         | wheel: best wheel utility                   |\n\
         |---------------------------------------------|\n\
         | !wheel       | fair sentence just sentence  |\n\
         | !wheel about | learn wheel understand wheel |\n\
-        ***********************************************".to_string()
+        ***********************************************\n\
+        ```".to_string()
 }

@@ -8,6 +8,8 @@ use self::chrono::prelude::*;
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
 1491376530|https://odin.handmade.network/|sjums|Odin programming language. New, hip, must try!
 */
+
+
 pub struct Url {
     pub timestamp: i64,
     pub url: String,
@@ -42,7 +44,7 @@ fn epoch() -> i64 {
 }
 
 pub fn help() -> String {
-        "\
+        "```\
         **************************************************\n\
         | url: url storage utility                       |\n\
         |------------------------------------------------|\n\
@@ -54,7 +56,7 @@ pub fn help() -> String {
         | !url find <string>       | list urls by search |\n\
         | !url count [nick]        | you guessed it!     |\n\
         | !url stats               | print pretty stats  |\n\
-        **************************************************".to_string()
+        **************************************************```".to_string()
 }
 
 pub fn add(url: &String, summary: &String, author: &String) {
@@ -84,7 +86,14 @@ pub fn get_last() -> Option<Url> {
                         Some(row) => {
                             match row {
                                 Ok(row) => {
-                                    Some(Url::new(row.get(0), row.get(1), row.get(2), row.get(3)))
+                                    Some(
+                                        Url::new(
+                                            row.get(0),
+                                            row.get(1),
+                                            row.get(2),
+                                            row.get_checked(3).unwrap_or_default()
+                                        )
+                                    )
                                 },
                                 Err(_) => None
                             }
@@ -118,14 +127,12 @@ pub fn find(query: String) -> Option<Vec<Url>> {
                     while let Some(res_row) = rows.next() {
                         match res_row {
                             Ok(row) => {
-                                let c0: i64 = row.get(0);
-                                println!("row OK {:?}", c0);
                                 results.push(
                                     Url::new(
                                         row.get(0),
                                         row.get(1),
                                         row.get(2),
-                                        row.get::<i32, String>(3)
+                                        row.get_checked(3).unwrap_or_default()
                                     )
                                 );
                             },

@@ -9,6 +9,8 @@ use serenity::client::Client;
 
 
 fn main() {
+    //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
+
     let token = get_token();
     //println!("Token is {}", token);
     let mut client = Client::login(&token);
@@ -17,15 +19,23 @@ fn main() {
     });
     client.on_message(|_context, message| {
         println!("{}", message.content);
+        if message.content.starts_with("!") {
+            println!("executing {}", message.content);
+            let resp = exec_command(&message.content[1..], &message.author.name);
+            match resp {
+                Some(resp) => {
+                    let _ = message.channel_id.say(&resp[..2000]);
+                    ()
+                },
+                None => (),
+            }
+        }
     });
 
     let _ = client.start();
-
-    let command = "unkown command".to_string();
-    exec_command(command, "sjums".to_string());
 }
 
-fn exec_command(command: String, user: String) {
+fn exec_command(command: &str, user: &str) -> Option<String> {
     let mut input = command.split_whitespace();
     let command = input.nth(0);
     let mut args = input;
@@ -34,13 +44,13 @@ fn exec_command(command: String, user: String) {
         Some("wheel") => {
             let arg = args.nth(0);
             if &arg == &Some("about") {
-                respond(wheel::about());
+                Some(wheel::about())
             }
             else if &arg == &Some("help") {
-                respond(wheel::help());
+                Some(wheel::help())
             }
             else {
-                respond(wheel::spin());
+                Some(wheel::spin())
             }
         },
         Some("url") => {
@@ -51,42 +61,45 @@ fn exec_command(command: String, user: String) {
                     let url = args.nth(0);
                     let desc = the_rest(args);
                     match url {
-                        Some(url) => urls::add(&String::from(url), &desc, &user),
-                        None => (),
+                        Some(url) => {
+                            urls::add(&String::from(url), &desc, &String::from(user));
+                            None
+                        },
+                        None => None
                     }
                 },
                 Some("help") => {
-                    respond(urls::help());
+                    Some(urls::help())
                 },
                 Some("latest") | Some("newest") => {
                     let last_url = urls::get_last();
                     match last_url {
-                        Some(url) => respond(url.to_string()),
-                        None => (),
-                    };
+                        Some(url) => Some(url.to_string()),
+                        None => None
+                    }
                 },
                 Some("find") => {
                     let query = the_rest(args);
                     let query_res = urls::find(query);
                     match query_res {
                         Some(matches) => {
+                            let mut ret_msg = String::new();
                             for m in matches {
-                                respond(m.to_string());
+                                ret_msg.push_str(&m.to_string());
+                                ret_msg.push('\n');
                             }
+                            Some(ret_msg)
                         },
-                        None => ()
-                    };
+                        None => None
+                    }
                 },
-                _ => ()
+                _ => None
             }
         },
-        _ => ()
+        _ => None
     }
 }
 
-fn respond(msg: String) {
-    println!("{}", msg);
-}
 
 fn the_rest(args: std::str::SplitWhitespace) -> String {
     let mut out = String::new();
