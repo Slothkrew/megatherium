@@ -154,3 +154,20 @@ pub fn find(query: String) -> Option<Vec<Url>> {
 
 }
 
+pub fn delete(url: &String, author: &String) {
+    let connection = connection();
+
+    println!("DELETE FROM urls WHERE url = {} AND author = {};", url, author);
+    let res = connection.execute("DELETE FROM urls WHERE url = ? AND author = ?;", 
+        &[url, author]);
+    match res {
+        Ok(res) => {
+            println!("Removed {} rows from DB.", res);
+        },
+        Err(e) => {
+            println!("Error remove url from DB; {}", e);
+        }
+    }
+    
+
+}

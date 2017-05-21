@@ -7,7 +7,6 @@ mod wheel;
 use std::io::Read;
 use serenity::client::Client;
 
-
 fn main() {
     //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
 
@@ -99,6 +98,16 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                         },
                         None => None
                     }
+                },
+                Some("delete") => {
+                    let url = args.nth(0);
+                    match url {
+                        Some(url) => { 
+                            urls::delete(&String::from(url), &String::from(user))
+                        },
+                        None => ()
+                    };
+                    None
                 },
                 _ => None
             }
