@@ -18,13 +18,20 @@ fn main() {
         println!("Ready: {}#{}", ready.user.name, ready.user.discriminator);
     });
     client.on_message(|_context, message| {
-        println!("{}", message.content);
+        //println!("{}", message.content);
         if message.content.starts_with("!") {
             println!("executing {}", message.content);
             let resp = exec_command(&message.content[1..], &message.author.name);
             match resp {
                 Some(resp) => {
-                    let _ = message.channel_id.say(&resp[..2000]);
+                    if &resp.len() > &2000 {
+                        println!("Message is {} bytes longs. Truncating messages.", resp.len());
+                        let _ = message.channel_id.say(&resp[..2000]);
+                        let _ = message.channel_id.say(&"<Message truncated>".to_string());    
+                    }
+                    else {
+                        let _ = message.channel_id.say(&resp);
+                    }
                     ()
                 },
                 None => (),
