@@ -59,9 +59,7 @@ pub fn help() -> String {
         |------------------------------------------------|\n\
         | !url                     | get a random link   |\n\
         | !url add <url> [summary] | add a new link      |\n\
-        | !url clear               | clear your urls     |\n\
         | !url latest|newest       | get the latest link |\n\
-        | !url list [nick]         | list urls           |\n\
         | !url find <string>       | list urls by search |\n\
         | !url count [nick]        | you guessed it!     |\n\
         | !url stats               | print pretty stats  |\n\
@@ -82,14 +80,82 @@ pub fn add(url: &String, summary: &String, author: &String) {
     }
 }
 
-pub fn get_last() -> Url {
-    Url::new(-1, "https://example.com".to_string(), "yoyo".to_string(), "cool site. Very example".to_string())
+fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Option<Vec<Url>> {
+    let mut results = Vec::<Url>::new();
+
+    let connection = connection();
+    match connection.prepare(&query) {
+        Ok(mut statement) => {
+            match statement.query(&params) {
+                Ok(mut rows) => {
+                    while let Some(res_row) = rows.next() {
+                        match res_row {
+                            Ok(row) => {
+                                results.push(
+                                    Url::new(
+                                        row.get(0),
+                                        row.get(1),
+                                        row.get(2),
+                                        row.get_checked(3).unwrap_or_default()
+                                    )
+                                );
+                            },
+                            Err(_) => ()
+                        };
+                    };
+                },
+                Err(_) => ()
+            }
+        },
+        Err(_) => ()
+    };
+
+    if &results.len() > &0 {
+        Some(results)
+    } else {
+        None
+    }
 }
 
-pub fn find(query: String) -> Vec<Url> {
-    vec! {
-        Url::new(-1, "https://example.com".to_string(), "yoyo".to_string(), format!("cool {}. Very example", query)),
-        Url::new(-2, "https://website.com".to_string(), "manman".to_string(), format!("website about {}.", query))
+pub fn find(query: String) -> Option<Vec<Url>> {
+    let mut sql_query = query.replace(" ", "%");
+    sql_query.insert(0, '%');
+    sql_query.push('%');
+
+    query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(), 
+                    &[&sql_query, &sql_query, &sql_query])
+}
+
+pub fn delete(url: &String, author: &String) {
+    let connection = connection();
+
+    println!("DELETE FROM urls WHERE url = {} AND author = {};", url, author);
+    let res = connection.execute("DELETE FROM urls WHERE url = ? AND author = ?;", 
+        &[url, author]);
+    match res {
+        Ok(res) => {
+            println!("Removed {} rows from DB.", res);
+        },
+        Err(e) => {
+            println!("Error remove url from DB; {}", e);
+        }
+    }
+}
+
+pub fn count(author: &Option<String>) -> usize {
+    match author {
+        Some(author) => {
+            match query_many("SELECT * FROM urls WHERE [author] = ?;".to_string(), &[&author]) {
+                Some(urls) => urls.len(),
+                None => 0
+            }
+        },
+        None => {
+            match query_many("SELECT * FROM urls;".to_string(), &[]) {
+                    Some(urls) => urls.len(),
+                    None => 0
+            }
+        },
     }
 }
 

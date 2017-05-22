@@ -50,7 +50,30 @@ fn exec_command(command: String, user: String) {
                         respond(m.to_string());
                     }
                 },
-                _ => ()
+                Some("delete") => {
+                    let url = args.nth(0);
+                    match url {
+                        Some(url) => { 
+                            urls::delete(&String::from(url), &String::from(user))
+                        },
+                        None => ()
+                    };
+                    None
+                },
+                Some("count") => {
+                    let nick = args.nth(0);
+                    let added = match nick {
+                        Some(nick) => {
+                            let added = urls::count(Some(nick));
+                            Some(format!("{} links found, added by {}", added, nick))
+                        },
+                        None => {
+                            let added = urls::count(None);
+                            Some(format!("{} delicious urls found in our collective collection", added))
+                        }
+                    };
+                }
+                _ => None
             }
         },
         _ => ()
