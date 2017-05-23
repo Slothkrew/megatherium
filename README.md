@@ -18,8 +18,10 @@ Slothbot just got an upgrade!
 * Set the `INCLUDE` and `LIBPATH` environment variables to point to the `<openssl dir>\include` folder.
 * Add a `config.json` containing the `bot_token`.
 * Run with `cargo run` from the root directory.
+* Remember to include the `*.dll` files if you move the `.exe` file.
 
 #### Ubuntu 16.04 LTS
 * Install `libsqlite3-dev` using `aptitude`.
 * Add a `config.json` containing the `bot_token`.
 * Run with `cargo run` from the root directory.
+* Remember to include the `*.lib` files if you move the executable file.
