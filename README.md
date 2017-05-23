@@ -3,6 +3,16 @@ Slothbot just got an upgrade!
 
 ## How to run
 ---
+#### For everyone
+* Create a `config.json` file with the following:
+    ```
+    {
+        "bot_token": "<the bot token>",
+        "sqlite_path": "<path to the sqlite database>"
+    }
+    ```
+* See the platform specifics below.
+
 #### Windows
 * On windows get [openssl (the installer for developers)](https://slproweb.com/products/Win32OpenSSL.html).
 * Set the `INCLUDE` and `LIBPATH` environment variables to point to the `<openssl dir>\include` folder.
