@@ -6,5 +6,6 @@ authors = ["bdoner <bdoner@user.noreply.github.com>"]
 [dependencies]
 rand = "0.3"
 rusqlite = "0.11.0"
-time = "0.1.37"
-chrono = "0.3"
+chrono = "0.3.1"
+json = "0.11.6"
+serenity = "0.2.0"

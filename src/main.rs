@@ -1,12 +1,47 @@
+extern crate serenity;
+extern crate json;
+
 mod urls;
 mod wheel;
 
+use std::io::Read;
+use serenity::client::Client;
+
 fn main() {
-    let command = "url find something".to_string();
-    exec_command(command, format!("sjums"));
+    //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
+
+    let token = get_token();
+    //println!("Token is {}", token);
+    let mut client = Client::login(&token);
+    client.on_ready(|_context, ready|{
+        println!("Ready: {}#{}", ready.user.name, ready.user.discriminator);
+    });
+    client.on_message(|_context, message| {
+        //println!("{}", message.content);
+        if message.content.starts_with("!") {
+            println!("executing {}", message.content);
+            let resp = exec_command(&message.content[1..], &message.author.name);
+            match resp {
+                Some(resp) => {
+                    if &resp.len() > &2000 {
+                        println!("Message is {} bytes longs. Truncating messages.", resp.len());
+                        let _ = message.channel_id.say(&resp[..2000]);
+                        let _ = message.channel_id.say(&"<Message truncated>".to_string());
+                    }
+                    else {
+                        let _ = message.channel_id.say(&resp);
+                    }
+                    ()
+                },
+                None => (),
+            }
+        }
+    });
+
+    let _ = client.start();
 }
 
-fn exec_command(command: String, user: String) {
+fn exec_command(command: &str, user: &str) -> Option<String> {
     let mut input = command.split_whitespace();
     let command = input.nth(0);
     let mut args = input;
@@ -15,13 +50,13 @@ fn exec_command(command: String, user: String) {
         Some("wheel") => {
             let arg = args.nth(0);
             if &arg == &Some("about") {
-                respond(wheel::about());
+                Some(wheel::about())
             }
             else if &arg == &Some("help") {
-                respond(wheel::help());
+                Some(wheel::help())
             }
             else {
-                respond(wheel::spin());
+                Some(wheel::spin())
             }
         },
         Some("url") => {
@@ -32,28 +67,42 @@ fn exec_command(command: String, user: String) {
                     let url = args.nth(0);
                     let desc = the_rest(args);
                     match url {
-                        Some(url) => urls::add(&String::from(url), &desc, &user),
-                        None => (),
+                        Some(url) => {
+                            urls::add(&String::from(url), &desc, &String::from(user));
+                            None
+                        },
+                        None => None
                     }
                 },
                 Some("help") => {
-                    respond(urls::help());
+                    Some(urls::help())
                 },
                 Some("latest") | Some("newest") => {
                     let last_url = urls::get_last();
-                    respond(last_url.to_string());
+                    match last_url {
+                        Some(url) => Some(url.to_string()),
+                        None => None
+                    }
                 },
                 Some("find") => {
                     let query = the_rest(args);
-                    let matches = urls::find(query);
-                    for m in matches {
-                        respond(m.to_string());
+                    let query_res = urls::find(query);
+                    match query_res {
+                        Some(matches) => {
+                            let mut ret_msg = String::new();
+                            for m in matches {
+                                ret_msg.push_str(&m.to_string());
+                                ret_msg.push('\n');
+                            }
+                            Some(ret_msg)
+                        },
+                        None => None
                     }
                 },
                 Some("delete") => {
                     let url = args.nth(0);
                     match url {
-                        Some(url) => { 
+                        Some(url) => {
                             urls::delete(&String::from(url), &String::from(user))
                         },
                         None => ()
@@ -76,13 +125,10 @@ fn exec_command(command: String, user: String) {
                 _ => None
             }
         },
-        _ => ()
+        _ => None
     }
 }
 
-fn respond(msg: String) {
-    println!("{}", msg);
-}
 
 fn the_rest(args: std::str::SplitWhitespace) -> String {
     let mut out = String::new();
@@ -92,4 +138,13 @@ fn the_rest(args: std::str::SplitWhitespace) -> String {
     }
     out.pop();
     out
+}
+
+fn get_token() -> String {
+    let mut file = std::fs::File::open("config.json").expect("Could not file config.json file!");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Could not read file content!");
+
+    let data = json::parse(&contents).expect("Could not parse config.json");
+    return String::from(data["bot_token"].as_str().expect("Could not read bot_token as string!"));
 }

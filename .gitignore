@@ -7,5 +7,7 @@
 *.pdb
 *.exe
 
-# development
+# development files and config file
+*.exp
 urls.db
+config.json
