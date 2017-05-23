@@ -211,7 +211,12 @@ impl Urls {
         sql_query.insert(0, '%');
         sql_query.push('%');
 
-        self.query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(), &[&sql_query, &sql_query, &sql_query])
+        let urls = self.query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(), &[&sql_query, &sql_query, &sql_query])?;
+        if &urls.len() > &0 {
+            Ok(urls)
+        } else {
+            Err(From::<String>::from("That's a 404!".to_string()))
+        }
     }
 
     pub fn delete(&self, url: &String, author: &String) {

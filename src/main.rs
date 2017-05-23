@@ -7,6 +7,8 @@ mod wheel;
 use std::io::Read;
 use serenity::client::Client;
 use std::error::Error;
+use urls::*;
+use std::str::FromStr;
 
 fn main() {
     //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
@@ -62,7 +64,7 @@ fn exec_command(command: &str, user: &str, config: &Config) -> Result<String, Bo
         },
         Some("url") => {
             //Todo: add, clear?, latest/newest, list, find, count, stats
-            let url_mod = urls::Urls::new(&config.sqlite_path);
+            let url_mod = Urls::new(&config.sqlite_path);
             let arg = args.nth(0);
             match arg {
                 Some("add") => {
@@ -85,14 +87,18 @@ fn exec_command(command: &str, user: &str, config: &Config) -> Result<String, Bo
                 },
                 Some("find") => {
                     let query = the_rest(args);
-                    let query_res = url_mod.find(query)?;
+                    let query_res = url_mod.find(query);
                     let mut ret_msg = String::new();
-
-                    for m in query_res {
-                        ret_msg.push_str(&m.to_string());
-                        ret_msg.push('\n');
+                    match query_res {
+                        Ok(urls) => {
+                            for m in urls {
+                                ret_msg.push_str(&m.to_string());
+                                ret_msg.push('\n');
+                            }
+                            Ok(ret_msg)
+                         },
+                        Err(_) => Ok("That's a 404!".to_string())
                     }
-                    Ok(ret_msg)
                 },
                 Some("delete") => {
                     let url = args.nth(0);
@@ -127,7 +133,7 @@ fn exec_command(command: &str, user: &str, config: &Config) -> Result<String, Bo
                 }
             }
         },
-        _ => Err(From::from(""))
+        _ => Ok("You what bro?!".to_string())
     }
 }
 
