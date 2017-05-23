@@ -10,9 +10,9 @@ use serenity::client::Client;
 fn main() {
     //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
 
-    let token = get_token();
+    let config = get_config();
     //println!("Token is {}", token);
-    let mut client = Client::login(&token);
+    let mut client = Client::login(&config.bot_token);
     client.on_ready(|_context, ready|{
         println!("Ready: {}#{}", ready.user.name, ready.user.discriminator);
     });
@@ -148,11 +148,20 @@ fn the_rest(args: std::str::SplitWhitespace) -> String {
     out
 }
 
-fn get_token() -> String {
+struct Config {
+    bot_token: String,
+    #[allow(dead_code)] //for now :)
+    sqlite_path: String
+}
+
+fn get_config() -> Config {
     let mut file = std::fs::File::open("config.json").expect("Could not file config.json file!");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Could not read file content!");
 
     let data = json::parse(&contents).expect("Could not parse config.json");
-    return String::from(data["bot_token"].as_str().expect("Could not read bot_token as string!"));
+    Config {
+        bot_token: String::from(data["bot_token"].as_str().expect("Could not read bot_token as string!")),
+        sqlite_path: String::from(data["sqlite_path"].as_str().expect("Could not read sqlite_path as string!"))
+    }
 }
