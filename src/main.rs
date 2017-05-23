@@ -111,7 +111,7 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                 },
                 Some("count") => {
                     let nick = args.nth(0);
-                    let added = match nick {
+                    match nick {
                         Some(nick) => {
                             let added = urls::count(Some(nick));
                             Some(format!("{} links found, added by {}", added, nick))
@@ -120,7 +120,7 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                             let added = urls::count(None);
                             Some(format!("{} delicious urls found in our collective collection", added))
                         }
-                    };
+                    }
                 }
                 _ => None
             }

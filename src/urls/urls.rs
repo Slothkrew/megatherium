@@ -1,5 +1,4 @@
 extern crate rusqlite;
-extern crate time;
 extern crate chrono;
 
 use self::chrono::prelude::*;
@@ -72,6 +71,17 @@ pub fn add(url: &String, summary: &String, author: &String) {
     }
 }
 
+pub fn get_last() -> Option<Url> {
+    let url = match query_many("SELECT * FROM urls ORDER BY timestamp DESC LIMIT 1;".to_string(), &[]) {
+        Some(mut urls) => {
+            urls.pop()
+        },
+        None => None
+    };
+
+    url
+}
+
 fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Option<Vec<Url>> {
     let mut results = Vec::<Url>::new();
 
@@ -133,8 +143,8 @@ pub fn delete(url: &String, author: &String) {
     }
 }
 
-pub fn count(author: &Option<String>) -> usize {
-    match *author {
+pub fn count(author: Option<&str>) -> usize {
+    match author {
         Some(author) => {
             match query_many("SELECT * FROM urls WHERE [author] = ?;".to_string(), &[&author]) {
                 Some(urls) => urls.len(),
