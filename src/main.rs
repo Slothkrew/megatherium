@@ -17,11 +17,11 @@ fn main() {
     client.on_ready(|_context, ready|{
         println!("Ready: {}#{}", ready.user.name, ready.user.discriminator);
     });
-    client.on_message(|_context, message| {
+    client.on_message(move |_context, message| {
         //println!("{}", message.content);
         if message.content.starts_with("!") {
             println!("executing {}", message.content);
-            let resp = exec_command(&message.content[1..], &message.author.name);
+            let resp = exec_command(&message.content[1..], &message.author.name, &config);
             match resp {
                 Ok(resp) => {
                     if &resp.len() > &2000 {
@@ -42,7 +42,7 @@ fn main() {
     let _ = client.start();
 }
 
-fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
+fn exec_command(command: &str, user: &str, config: &Config) -> Result<String, Box<Error>> {
     let mut input = command.split_whitespace();
     let command = input.nth(0);
     let mut args = input;
@@ -62,6 +62,7 @@ fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
         },
         Some("url") => {
             //Todo: add, clear?, latest/newest, list, find, count, stats
+            let url_mod = urls::Urls::new(&config.sqlite_path);
             let arg = args.nth(0);
             match arg {
                 Some("add") => {
@@ -69,22 +70,22 @@ fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
                     let desc = the_rest(args);
                     match url {
                         Some(url) => {
-                            urls::add(&String::from(url), &desc, &String::from(user));
+                            url_mod.add(&String::from(url), &desc, &String::from(user));
                             Err(From::from(""))
                         },
                         None => Err(From::from(""))
                     }
                 },
                 Some("help") => {
-                    Ok(urls::help())
+                    Ok(url_mod.help())
                 },
                 Some("latest") | Some("newest") => {
-                    let last_url = urls::get_last()?;
+                    let last_url = url_mod.get_last()?;
                     Ok(last_url.to_string())
                 },
                 Some("find") => {
                     let query = the_rest(args);
-                    let query_res = urls::find(query)?;
+                    let query_res = url_mod.find(query)?;
                     let mut ret_msg = String::new();
 
                     for m in query_res {
@@ -97,7 +98,7 @@ fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
                     let url = args.nth(0);
                     match url {
                         Some(url) => {
-                            urls::delete(&String::from(url), &String::from(user))
+                            url_mod.delete(&String::from(url), &String::from(user))
                         },
                         _ => ()
                     };
@@ -107,21 +108,21 @@ fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
                     let nick = args.nth(0);
                     match nick {
                         Some(nick) => {
-                            let added = urls::count(Some(nick))?;
+                            let added = url_mod.count(Some(nick))?;
                             Ok(format!("{} links found, added by {}", added, nick))
                         },
                         None => {
-                            let added = urls::count(None)?;
+                            let added = url_mod.count(None)?;
                             Ok(format!("{} delicious urls found in our collective collection", added))
                         }
                     }
                 },
                 Some("stats") => {
-                    let stats = urls::stats()?;
+                    let stats = url_mod.stats()?;
                     Ok(stats)
                 }
                 _ => {
-                    let rnd = urls::random()?;
+                    let rnd = url_mod.random()?;
                     Ok(rnd.to_string())
                 }
             }
