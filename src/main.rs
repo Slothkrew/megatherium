@@ -6,6 +6,7 @@ mod wheel;
 
 use std::io::Read;
 use serenity::client::Client;
+use std::error::Error;
 
 fn main() {
     //println!("{}", exec_command(&"url find h".to_string(), &"sjums".to_string()).unwrap());
@@ -22,7 +23,7 @@ fn main() {
             println!("executing {}", message.content);
             let resp = exec_command(&message.content[1..], &message.author.name);
             match resp {
-                Some(resp) => {
+                Ok(resp) => {
                     if &resp.len() > &2000 {
                         println!("Message is {} bytes longs. Truncating messages.", resp.len());
                         let _ = message.channel_id.say(&resp[..2000]);
@@ -33,7 +34,7 @@ fn main() {
                     }
                     ()
                 },
-                None => (),
+                _ => ()
             }
         }
     });
@@ -41,7 +42,7 @@ fn main() {
     let _ = client.start();
 }
 
-fn exec_command(command: &str, user: &str) -> Option<String> {
+fn exec_command(command: &str, user: &str) -> Result<String, Box<Error>> {
     let mut input = command.split_whitespace();
     let command = input.nth(0);
     let mut args = input;
@@ -50,13 +51,13 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
         Some("wheel") => {
             let arg = args.nth(0);
             if &arg == &Some("about") {
-                Some(wheel::about())
+                Ok(wheel::about())
             }
             else if &arg == &Some("help") {
-                Some(wheel::help())
+                Ok(wheel::help())
             }
             else {
-                Some(wheel::spin())
+                Ok(wheel::spin())
             }
         },
         Some("url") => {
@@ -69,35 +70,28 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                     match url {
                         Some(url) => {
                             urls::add(&String::from(url), &desc, &String::from(user));
-                            None
+                            Err(From::from(""))
                         },
-                        None => None
+                        None => Err(From::from(""))
                     }
                 },
                 Some("help") => {
-                    Some(urls::help())
+                    Ok(urls::help())
                 },
                 Some("latest") | Some("newest") => {
-                    let last_url = urls::get_last();
-                    match last_url {
-                        Some(url) => Some(url.to_string()),
-                        None => None
-                    }
+                    let last_url = urls::get_last()?;
+                    Ok(last_url.to_string())
                 },
                 Some("find") => {
                     let query = the_rest(args);
-                    let query_res = urls::find(query);
-                    match query_res {
-                        Some(matches) => {
-                            let mut ret_msg = String::new();
-                            for m in matches {
-                                ret_msg.push_str(&m.to_string());
-                                ret_msg.push('\n');
-                            }
-                            Some(ret_msg)
-                        },
-                        None => None
+                    let query_res = urls::find(query)?;
+                    let mut ret_msg = String::new();
+
+                    for m in query_res {
+                        ret_msg.push_str(&m.to_string());
+                        ret_msg.push('\n');
                     }
+                    Ok(ret_msg)
                 },
                 Some("delete") => {
                     let url = args.nth(0);
@@ -105,35 +99,34 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                         Some(url) => {
                             urls::delete(&String::from(url), &String::from(user))
                         },
-                        None => ()
+                        _ => ()
                     };
-                    None
+                    Err(From::from(""))
                 },
                 Some("count") => {
                     let nick = args.nth(0);
                     match nick {
                         Some(nick) => {
-                            let added = urls::count(Some(nick));
-                            Some(format!("{} links found, added by {}", added, nick))
+                            let added = urls::count(Some(nick))?;
+                            Ok(format!("{} links found, added by {}", added, nick))
                         },
                         None => {
-                            let added = urls::count(None);
-                            Some(format!("{} delicious urls found in our collective collection", added))
+                            let added = urls::count(None)?;
+                            Ok(format!("{} delicious urls found in our collective collection", added))
                         }
                     }
                 },
                 Some("stats") => {
-                    Some(urls::stats())
+                    let stats = urls::stats()?;
+                    Ok(stats)
                 }
                 _ => {
-                    match urls::random() {
-                        Some(url) => Some(url.to_string()),
-                        None => None,
-                    }
+                    let rnd = urls::random()?;
+                    Ok(rnd.to_string())
                 }
             }
         },
-        _ => None
+        _ => Err(From::from(""))
     }
 }
 

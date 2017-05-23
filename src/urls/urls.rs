@@ -2,7 +2,7 @@ extern crate rusqlite;
 extern crate chrono;
 
 use self::chrono::prelude::*;
-
+use std::error::Error;
 /*
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
 1491376530|https://odin.handmade.network/|sjums|Odin programming language. New, hip, must try!
@@ -56,11 +56,16 @@ pub fn help() -> String {
         **************************************************```".to_string()
 }
 
-pub fn random() -> Option<Url> {
-    match query_many("SELECT * FROM urls ORDER BY random() LIMIT 1;".to_string(), &[]) {
-        Some(mut urls) => urls.pop(),
-        None => None
+pub fn random() -> Result<Url, Box<Error>> {
+    let mut urls = query_many("SELECT * FROM urls ORDER BY random() LIMIT 1;".to_string(), &[])?;
+    match urls.pop() {
+        Some(url) => Ok(url),
+        None => Err(From::from("Couldn't get url"))
     }
+    // match query_many("SELECT * FROM urls ORDER BY random() LIMIT 1;".to_string(), &[]) {
+    //     Some(mut urls) => urls.pop(),
+    //     None => None
+    // }
 }
 
 pub fn add(url: &String, summary: &String, author: &String) {
@@ -77,27 +82,21 @@ pub fn add(url: &String, summary: &String, author: &String) {
     }
 }
 
-pub fn get_last() -> Option<Url> {
-    let url = match query_many("SELECT * FROM urls ORDER BY timestamp DESC LIMIT 1;".to_string(), &[]) {
-        Some(mut urls) => {
-            urls.pop()
-        },
-        None => None
-    };
-
-    url
+pub fn get_last() -> Result<Url, Box<Error>> {
+    let mut urls = query_many("SELECT * FROM urls ORDER BY timestamp DESC LIMIT 1;".to_string(), &[])?;
+    match urls.pop() {
+        Some(url) => Ok(url),
+        None => Err(From::from("Couldn't get url"))
+    }
 }
 
 #[allow(dead_code)]
-fn get_first() -> Option<Url> {
-    let url = match query_many("SELECT * FROM urls ORDER BY timestamp ASC LIMIT 1;".to_string(), &[]) {
-        Some(mut urls) => {
-            urls.pop()
-        },
-        None => None
-    };
-
-    url
+fn get_first() -> Result<Url, Box<Error>> {
+    let mut urls = query_many("SELECT * FROM urls ORDER BY timestamp ASC LIMIT 1;".to_string(), &[])?;
+    match urls.pop() {
+        Some(url) => Ok(url),
+        None => Err(From::from("Couldn't get url"))
+    }
 }
 
 
@@ -116,34 +115,25 @@ fn get_first() -> Option<Url> {
 <slothbot_>         Links added per day: 0.42
 
 */
-pub fn stats() -> String {
+pub fn stats() -> Result<String, Box<Error>> {
     let mut results = Vec::<(String, i32)>::new();
 
     let connection = connection();
-    let p_statement = connection.prepare("SELECT author, COUNT(author) FROM urls GROUP BY author ORDER BY COUNT(author) DESC;");
+    let mut statement = connection.prepare("SELECT author, COUNT(author) FROM urls GROUP BY author ORDER BY COUNT(author) DESC;")?;
+    let mut rows = statement.query(&[])?;
 
-    match p_statement {
-        Ok(mut statement) => {
-            match statement.query(&[]) {
-                Ok(mut rows) => {
-                    while let Some(res_row) = rows.next() {
-                        match res_row {
-                            Ok(row) => {
-                                let author: String = row.get(0);
-                                let urls: i32 = row.get(1);
-                                results.push((author, urls));
-                            },
-                            Err(_) => ()
-                        }
-                    }
-                },
-                Err(_) => ()
-            }
-        },
-        Err(_) => ()
+    while let Some(res_row) = rows.next() {
+        match res_row {
+            Ok(row) => {
+                let author: String = row.get(0);
+                let urls: i32 = row.get(1);
+                results.push((author, urls));
+            },
+            Err(_) => ()
+        }
     }
 
-    let url_count = count(None) as f32;
+    let url_count = count(None)? as f32;
     let mut max_user_len = 0;
     for res in &results {
         let ref uname = res.0;
@@ -177,53 +167,45 @@ pub fn stats() -> String {
     result.push('+');
 
     result.push_str(&"```".to_string());
-    result
+    Ok(result)
 }
 
-fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Option<Vec<Url>> {
+fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Result<Vec<Url>, Box<Error>> {
     let mut results = Vec::<Url>::new();
 
     let connection = connection();
-    match connection.prepare(&query) {
-        Ok(mut statement) => {
-            match statement.query(&params) {
-                Ok(mut rows) => {
-                    while let Some(res_row) = rows.next() {
-                        match res_row {
-                            Ok(row) => {
-                                results.push(
-                                    Url::new(
-                                        row.get(0),
-                                        row.get(1),
-                                        row.get(2),
-                                        row.get_checked(3).unwrap_or_default()
-                                    )
-                                );
-                            },
-                            Err(_) => ()
-                        };
-                    };
-                },
-                Err(_) => ()
-            }
-        },
-        Err(_) => ()
+    let mut statement = connection.prepare(&query)?;
+    let mut rows = statement.query(&params)?;
+
+    while let Some(res_row) = rows.next() {
+        match res_row {
+            Ok(row) => {
+                results.push(
+                    Url::new(
+                        row.get(0),
+                        row.get(1),
+                        row.get(2),
+                        row.get_checked(3).unwrap_or_default()
+                    )
+                );
+            },
+            Err(_) => ()
+        };
     };
 
     if &results.len() > &0 {
-        Some(results)
+        Ok(results)
     } else {
-        None
+        Err(From::from("No urls found."))
     }
 }
 
-pub fn find(query: String) -> Option<Vec<Url>> {
+pub fn find(query: String) -> Result<Vec<Url>, Box<Error>> {
     let mut sql_query = query.replace(" ", "%");
     sql_query.insert(0, '%');
     sql_query.push('%');
 
-    query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(),
-                    &[&sql_query, &sql_query, &sql_query])
+    query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(), &[&sql_query, &sql_query, &sql_query])
 }
 
 pub fn delete(url: &String, author: &String) {
@@ -241,19 +223,15 @@ pub fn delete(url: &String, author: &String) {
     }
 }
 
-pub fn count(author: Option<&str>) -> usize {
+pub fn count(author: Option<&str>) -> Result<usize, Box<Error>> {
     match author {
         Some(author) => {
-            match query_many("SELECT * FROM urls WHERE [author] = ?;".to_string(), &[&author]) {
-                Some(urls) => urls.len(),
-                None => 0
-            }
+            let urls = query_many("SELECT * FROM urls WHERE [author] = ?;".to_string(), &[&author])?;
+            Ok(urls.len())
         },
         None => {
-            match query_many("SELECT * FROM urls;".to_string(), &[]) {
-                    Some(urls) => urls.len(),
-                    None => 0
-            }
+            let urls = query_many("SELECT * FROM urls;".to_string(), &[])?;
+            Ok(urls.len())
         }
     }
 }
