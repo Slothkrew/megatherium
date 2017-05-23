@@ -88,6 +88,98 @@ pub fn get_last() -> Option<Url> {
     url
 }
 
+#[allow(dead_code)]
+fn get_first() -> Option<Url> {
+    let url = match query_many("SELECT * FROM urls ORDER BY timestamp ASC LIMIT 1;".to_string(), &[]) {
+        Some(mut urls) => {
+            urls.pop()
+        },
+        None => None
+    };
+
+    url
+}
+
+
+
+/*
+
+<slothbot_>         Let's see who's on top in here!
+<slothbot_> dot|not |#######################                 | 59.76%
+<slothbot_>   sjums |#########                               | 23.37%
+<slothbot_> sleeper |###                                     | 9.17%
+<slothbot_>    jsrn |#                                       | 4.44%
+<slothbot_>   maruu |                                        | 2.37%
+<slothbot_>   rfmon |                                        | 0.59%
+<slothbot_>   jsrn_ |                                        | 0.3%
+<slothbot_>         +----------------------------------------+
+<slothbot_>         Links added per day: 0.42
+
+*/
+pub fn stats() -> String {
+    let mut results = Vec::<(String, i32)>::new();
+
+    let connection = connection();
+    let p_statement = connection.prepare("SELECT author, COUNT(author) FROM urls GROUP BY author ORDER BY COUNT(author) DESC;");
+
+    match p_statement {
+        Ok(mut statement) => {
+            match statement.query(&[]) {
+                Ok(mut rows) => {
+                    while let Some(res_row) = rows.next() {
+                        match res_row {
+                            Ok(row) => {
+                                let author: String = row.get(0);
+                                let urls: i32 = row.get(1);
+                                results.push((author, urls));
+                            },
+                            Err(_) => ()
+                        }
+                    }
+                },
+                Err(_) => ()
+            }
+        },
+        Err(_) => ()
+    }
+
+    let url_count = count(None) as f32;
+    let mut max_user_len = 0;
+    for res in &results {
+        let ref uname = res.0;
+        if uname.len() > max_user_len {
+            max_user_len = uname.len();
+        }
+    }
+
+    let bar_width = 50;
+    let mut result = String::new();
+    result.push_str(&"```".to_string());
+
+    for res in results {
+        let author = res.0;
+        let urls = res.1 as f32;
+        result.push_str(&format!("{author:>width$} |", author=author, width=max_user_len));
+        let squares = ((urls / url_count) * bar_width as f32) as i32;
+        for _ in 0..squares {
+            result.push('#');
+        }
+        for _ in 0..bar_width-squares {
+            result.push(' ');
+        }
+        result.push_str(&format!(" | {:>5.2}%\n", (urls/url_count)*100.0));
+    }
+
+    result.push_str(&format!("{plus:>width$}", plus="+", width=max_user_len+2));
+    for _ in 0..bar_width+1 {
+        result.push('-');
+    }
+    result.push('+');
+
+    result.push_str(&"```".to_string());
+    result
+}
+
 fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Option<Vec<Url>> {
     let mut results = Vec::<Url>::new();
 

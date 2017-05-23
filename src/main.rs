@@ -121,6 +121,9 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                             Some(format!("{} delicious urls found in our collective collection", added))
                         }
                     }
+                },
+                Some("stats") => {
+                    Some(urls::stats())
                 }
                 _ => {
                     match urls::random() {
