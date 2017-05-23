@@ -3,7 +3,6 @@ extern crate chrono;
 
 use self::chrono::prelude::*;
 
-
 /*
 CREATE TABLE urls (timestamp INTEGER PRIMARY KEY, url TEXT, author TEXT, summary TEXT);
 1491376530|https://odin.handmade.network/|sjums|Odin programming language. New, hip, must try!
@@ -55,6 +54,13 @@ pub fn help() -> String {
         | !url count [nick]        | you guessed it!     |\n\
         | !url stats               | print pretty stats  |\n\
         **************************************************```".to_string()
+}
+
+pub fn random() -> Option<Url> {
+    match query_many("SELECT * FROM urls ORDER BY random() LIMIT 1;".to_string(), &[]) {
+        Some(mut urls) => urls.pop(),
+        None => None
+    }
 }
 
 pub fn add(url: &String, summary: &String, author: &String) {

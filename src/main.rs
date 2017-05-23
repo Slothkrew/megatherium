@@ -122,7 +122,12 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                         }
                     }
                 }
-                _ => None
+                _ => {
+                    match urls::random() {
+                        Some(url) => Some(url.to_string()),
+                        None => None,
+                    }
+                }
             }
         },
         _ => None
