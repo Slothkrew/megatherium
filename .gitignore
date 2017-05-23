@@ -11,3 +11,4 @@
 *.exp
 urls.db
 config.json
+deploy.sh
