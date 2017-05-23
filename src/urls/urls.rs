@@ -50,9 +50,7 @@ pub fn help() -> String {
         |------------------------------------------------|\n\
         | !url                     | get a random link   |\n\
         | !url add <url> [summary] | add a new link      |\n\
-        | !url clear               | clear your urls     |\n\
         | !url latest|newest       | get the latest link |\n\
-        | !url list [nick]         | list urls           |\n\
         | !url find <string>       | list urls by search |\n\
         | !url count [nick]        | you guessed it!     |\n\
         | !url stats               | print pretty stats  |\n\
@@ -74,55 +72,23 @@ pub fn add(url: &String, summary: &String, author: &String) {
 }
 
 pub fn get_last() -> Option<Url> {
-    let connection = connection();
-    let p_statement = connection.prepare("SELECT * FROM urls ORDER BY timestamp DESC LIMIT 1;");
-
-    let url = match p_statement {
-        Ok(mut statement) => {
-            match statement.query(&[]) {
-                Ok(mut rows) => {
-                    let row = rows.next();
-                    match row {
-                        Some(row) => {
-                            match row {
-                                Ok(row) => {
-                                    Some(
-                                        Url::new(
-                                            row.get(0),
-                                            row.get(1),
-                                            row.get(2),
-                                            row.get_checked(3).unwrap_or_default()
-                                        )
-                                    )
-                                },
-                                Err(_) => None
-                            }
-                        },
-                        None => None
-                    }
-                },
-                Err(_) => None,
-            }
+    let url = match query_many("SELECT * FROM urls ORDER BY timestamp DESC LIMIT 1;".to_string(), &[]) {
+        Some(mut urls) => {
+            urls.pop()
         },
-        Err(_) => None
+        None => None
     };
+
     url
 }
 
-pub fn find(query: String) -> Option<Vec<Url>> {
+fn query_many(query: String, params: &[&self::rusqlite::types::ToSql]) -> Option<Vec<Url>> {
     let mut results = Vec::<Url>::new();
 
-    let mut sql_query = query.replace(" ", "%");
-    sql_query.insert(0, '%');
-    sql_query.push('%');
-
-
     let connection = connection();
-    let p_statement = connection.prepare("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;");
-
-    match p_statement {
+    match connection.prepare(&query) {
         Ok(mut statement) => {
-            match statement.query(&[&sql_query, &sql_query, &sql_query]) {
+            match statement.query(&params) {
                 Ok(mut rows) => {
                     while let Some(res_row) = rows.next() {
                         match res_row {
@@ -136,30 +102,37 @@ pub fn find(query: String) -> Option<Vec<Url>> {
                                     )
                                 );
                             },
-                            Err(_) => println!("row ERR")
-                        }
-                    }
+                            Err(_) => ()
+                        };
+                    };
                 },
                 Err(_) => ()
             }
         },
         Err(_) => ()
     };
+
     if &results.len() > &0 {
         Some(results)
-    }
-    else {
+    } else {
         None
     }
+}
 
+pub fn find(query: String) -> Option<Vec<Url>> {
+    let mut sql_query = query.replace(" ", "%");
+    sql_query.insert(0, '%');
+    sql_query.push('%');
+
+    query_many("SELECT * FROM urls WHERE [summary] LIKE ? OR [url] LIKE ? OR [author] LIKE ? ORDER BY timestamp DESC;".to_string(),
+                    &[&sql_query, &sql_query, &sql_query])
 }
 
 pub fn delete(url: &String, author: &String) {
     let connection = connection();
 
     println!("DELETE FROM urls WHERE url = {} AND author = {};", url, author);
-    let res = connection.execute("DELETE FROM urls WHERE url = ? AND author = ?;", 
-        &[url, author]);
+    let res = connection.execute("DELETE FROM urls WHERE url = ? AND author = ?;", &[url, author]);
     match res {
         Ok(res) => {
             println!("Removed {} rows from DB.", res);
@@ -168,6 +141,21 @@ pub fn delete(url: &String, author: &String) {
             println!("Error remove url from DB; {}", e);
         }
     }
-    
+}
 
+pub fn count(author: Option<&str>) -> usize {
+    match author {
+        Some(author) => {
+            match query_many("SELECT * FROM urls WHERE [author] = ?;".to_string(), &[&author]) {
+                Some(urls) => urls.len(),
+                None => 0
+            }
+        },
+        None => {
+            match query_many("SELECT * FROM urls;".to_string(), &[]) {
+                    Some(urls) => urls.len(),
+                    None => 0
+            }
+        }
+    }
 }

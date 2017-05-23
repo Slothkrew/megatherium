@@ -26,7 +26,7 @@ fn main() {
                     if &resp.len() > &2000 {
                         println!("Message is {} bytes longs. Truncating messages.", resp.len());
                         let _ = message.channel_id.say(&resp[..2000]);
-                        let _ = message.channel_id.say(&"<Message truncated>".to_string());    
+                        let _ = message.channel_id.say(&"<Message truncated>".to_string());
                     }
                     else {
                         let _ = message.channel_id.say(&resp);
@@ -102,13 +102,26 @@ fn exec_command(command: &str, user: &str) -> Option<String> {
                 Some("delete") => {
                     let url = args.nth(0);
                     match url {
-                        Some(url) => { 
+                        Some(url) => {
                             urls::delete(&String::from(url), &String::from(user))
                         },
                         None => ()
                     };
                     None
                 },
+                Some("count") => {
+                    let nick = args.nth(0);
+                    match nick {
+                        Some(nick) => {
+                            let added = urls::count(Some(nick));
+                            Some(format!("{} links found, added by {}", added, nick))
+                        },
+                        None => {
+                            let added = urls::count(None);
+                            Some(format!("{} delicious urls found in our collective collection", added))
+                        }
+                    }
+                }
                 _ => None
             }
         },
